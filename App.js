@@ -46,9 +46,9 @@ const App = () => {
   const startScan = () => {
     // skip if scan process is currenly happening
     if (isScanning) {
+      console.log('Aready Scanning Friend!');
       return;
     }
-
     // first, clear existing peripherals
     peripherals.clear();
     setList(Array.from(peripherals.values()));
@@ -394,7 +394,7 @@ const App = () => {
           </TouchableHighlight>
           <TouchableHighlight onPress={() => setTestMode('read')}>
             <View style={[styles.row, styles.footerButton]}>
-              <Text>GEbter</Text>
+              <Text>Getter</Text>
             </View>
           </TouchableHighlight>
         </View>
