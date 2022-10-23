@@ -44,9 +44,10 @@ const App = () => {
 
   // start to scan peripherals
   const startScan = () => {
+    console.log('In start Scan');
     // skip if scan process is currenly happening
     if (isScanning) {
-      console.log('Aready Scanning Friend!');
+      console.log('Already Scanning...');
       return;
     }
     // first, clear existing peripherals
@@ -67,7 +68,6 @@ const App = () => {
   // handle discovered peripheral
   const handleDiscoverPeripheral = peripheral => {
     console.log('Got ble peripheral', peripheral);
-
     if (!peripheral.name) {
       peripheral.name = 'NO NAME';
     }
@@ -79,6 +79,18 @@ const App = () => {
   // handle stop scan event
   const handleStopScan = () => {
     console.log('Scan is stopped');
+    const discoveredPeripherals = Object.fromEntries(peripherals);
+
+    console.log(discoveredPeripherals);
+    fetch('https://d073-203-115-91-94.in.ngrok.io/getUUIDList', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-access-token': 'token-value',
+      },
+      body: JSON.stringify(discoveredPeripherals),
+    }).then(resp => console.log(resp.json()));
+    // .then(peripheralList => console.log(peripheralList));
     setIsScanning(false);
   };
 
@@ -96,11 +108,12 @@ const App = () => {
 
   // handle update value for characteristic
   const handleUpdateValueForCharacteristic = data => {
-    console.log(
-      'Received data from: ' + data.peripheral,
-      'Characteristic: ' + data.characteristic,
-      'Data: ' + data.value,
-    );
+    console.log('In Update Value for characteristic');
+    // console.log(
+    //   'Received data from: ' + data.peripheral,
+    //   'Characteristic: ' + data.characteristic,
+    //   'Data: ' + data.value,
+    // );
   };
 
   // retrieve connected peripherals.
@@ -160,8 +173,8 @@ const App = () => {
     // connect to selected peripheral
     BleManager.connect(peripheral.id)
       .then(() => {
-        console.log('Connected to ' + peripheral.id, peripheral);
-
+        //console.log('Connected to ' + peripheral.id, peripheral);
+        console.log('Her Here!');
         // update connected attribute
         updatePeripheral(peripheral, p => {
           p.connected = true;
@@ -170,7 +183,9 @@ const App = () => {
 
         // retrieve peripheral services info
         BleManager.retrieveServices(peripheral.id).then(peripheralInfo => {
-          console.log('Retrieved peripheral services', peripheralInfo);
+          //console.log('Retrieved peripheral services', peripheralInfo);
+
+          console.log('I am Here');
 
           // test read current peripheral RSSI value
           BleManager.readRSSI(peripheral.id).then(rssi => {
@@ -185,11 +200,11 @@ const App = () => {
 
           // test read and write data to peripheral
           const serviceUUID = '10000000-0000-0000-0000-000000000001';
-          const charasteristicUUID = '20000000-0000-0000-0000-000000000001';
+          const characteristicUUID = '20000000-0000-0000-0000-000000000001';
 
-          console.log('peripheral id:', peripheral.id);
-          console.log('service:', serviceUUID);
-          console.log('characteristic:', charasteristicUUID);
+          // console.log('peripheral id:', peripheral.id);
+          // console.log('service:', serviceUUID);
+          // console.log('characteristic:', characteristicUUID);
 
           switch (testMode) {
             case 'write':
@@ -201,7 +216,7 @@ const App = () => {
               BleManager.write(
                 peripheral.id,
                 serviceUUID,
-                charasteristicUUID,
+                characteristicUUID,
                 payloadBytes,
               )
                 .then(res => {
@@ -217,7 +232,7 @@ const App = () => {
 
             case 'read':
               // ===== test read data
-              BleManager.read(peripheral.id, serviceUUID, charasteristicUUID)
+              BleManager.read(peripheral.id, serviceUUID, characteristicUUID)
                 .then(res => {
                   console.log('read response', res);
                   if (res) {
@@ -238,7 +253,7 @@ const App = () => {
               BleManager.startNotification(
                 peripheral.id,
                 serviceUUID,
-                charasteristicUUID,
+                characteristicUUID,
               ).then(res => {
                 console.log('start notification response', res);
               });
