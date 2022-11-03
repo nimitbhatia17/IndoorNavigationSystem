@@ -17,9 +17,12 @@ import {
   Button,
   Platform,
   PermissionsAndroid,
+  Image,
   FlatList,
   TouchableHighlight,
 } from 'react-native';
+
+import DropDownPicker from 'react-native-dropdown-picker';
 
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 
@@ -41,6 +44,10 @@ const App = () => {
   const [list, setList] = useState([]);
   const peripherals = new Map();
   const [testMode, setTestMode] = useState('read');
+
+  const [open, setOpen] = useState(true);
+  const [value, setValue] = useState(null);
+  const [items, setItems] = useState([{label: 1, value: 1}]);
 
   // start to scan peripherals
   const startScan = () => {
@@ -82,15 +89,16 @@ const App = () => {
     const discoveredPeripherals = Object.fromEntries(peripherals);
 
     console.log(discoveredPeripherals);
-    fetch('https://d073-203-115-91-94.in.ngrok.io/getUUIDList', {
+    fetch('https://405d-203-115-91-214.in.ngrok.io/getUUIDList', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-access-token': 'token-value',
       },
       body: JSON.stringify(discoveredPeripherals),
-    }).then(resp => console.log(resp.json()));
-    // .then(peripheralList => console.log(peripheralList));
+    })
+      .then(resp => resp.json())
+      .then(peripheralList => console.log(peripheralList));
     setIsScanning(false);
   };
 
@@ -380,10 +388,7 @@ const App = () => {
         {/* header */}
         <View style={styles.body}>
           <View style={styles.scanButton}>
-            <Button
-              title={'Reload Bluetooth Beacons'}
-              onPress={() => startScan()}
-            />
+            <Button title={'Find Your Location'} onPress={() => startScan()} />
           </View>
 
           {list.length === 0 && (
@@ -400,18 +405,26 @@ const App = () => {
           keyExtractor={item => item.id}
         />
 
-        {/* bottom footer */}
-        <View style={styles.footer}>
-          <TouchableHighlight onPress={() => setTestMode('write')}>
-            <View style={[styles.row, styles.footerButton]}>
-              <Text>Enter Shelf</Text>
-            </View>
-          </TouchableHighlight>
-          <TouchableHighlight onPress={() => setTestMode('read')}>
-            <View style={[styles.row, styles.footerButton]}>
-              <Text>Getter</Text>
-            </View>
-          </TouchableHighlight>
+        {/* <Image
+          source={require('./Assets/BLEAppMap.png')}
+          style={styles.image}
+        /> */}
+
+        <DropDownPicker
+          placeholder="Where do you want to go?"
+          open={open}
+          value={value}
+          items={items}
+          setOpen={setOpen}
+          setValue={setValue}
+          setItems={setItems}
+          zIndex={1000}
+        />
+
+        <View style={styles.body}>
+          <View style={styles.scanButton}>
+            <Button title={'Get Path'} onPress={() => startScan()} />
+          </View>
         </View>
       </SafeAreaView>
     </>
@@ -440,11 +453,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     width: '100%',
     marginBottom: 30,
+    marginTop: 70,
   },
   footerButton: {
     alignSelf: 'stretch',
     padding: 10,
     backgroundColor: 'grey',
+  },
+  image: {
+    flex: 1,
+    width: null,
+    height: null,
+    resizeMode: 'contain',
   },
 });
 
