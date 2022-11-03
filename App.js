@@ -38,6 +38,7 @@ import {stringToBytes} from 'convert-string';
 // import Buffer function.
 // this func is useful for making bytes-to-string conversion easier
 const Buffer = require('buffer/').Buffer;
+var globalImageMode = 0;
 
 const App = () => {
   const [isScanning, setIsScanning] = useState(false);
@@ -45,9 +46,15 @@ const App = () => {
   const peripherals = new Map();
   const [testMode, setTestMode] = useState('read');
 
-  const [open, setOpen] = useState(true);
+  const [imgMode, setImgMode] = useState('0');
+
+  const [open, setOpen] = useState(false);
   const [value, setValue] = useState(null);
-  const [items, setItems] = useState([{label: 1, value: 1}]);
+  const [items, setItems] = useState([
+    {label: 1, value: 1},
+    {label: 2, value: 2},
+    {label: 3, value: 3},
+  ]);
 
   // start to scan peripherals
   const startScan = () => {
@@ -89,16 +96,30 @@ const App = () => {
     const discoveredPeripherals = Object.fromEntries(peripherals);
 
     console.log(discoveredPeripherals);
-    fetch('https://405d-203-115-91-214.in.ngrok.io/getUUIDList', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-access-token': 'token-value',
-      },
-      body: JSON.stringify(discoveredPeripherals),
-    })
-      .then(resp => resp.json())
-      .then(peripheralList => console.log(peripheralList));
+    console.log(globalImageMode);
+    if (globalImageMode === 1) {
+      fetch('https://090a-14-139-234-179.in.ngrok.io/getLocation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-access-token': 'token-value',
+        },
+        body: JSON.stringify(discoveredPeripherals),
+      })
+        .then(resp => resp.json())
+        .then(peripheralList => console.log(peripheralList));
+    } else if (globalImageMode === 2) {
+      fetch('https://090a-14-139-234-179.in.ngrok.io/getPath', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-access-token': 'token-value',
+        },
+        body: JSON.stringify(discoveredPeripherals),
+      })
+        .then(resp => resp.json())
+        .then(peripheralList => console.log(peripheralList));
+    }
     setIsScanning(false);
   };
 
@@ -388,7 +409,13 @@ const App = () => {
         {/* header */}
         <View style={styles.body}>
           <View style={styles.scanButton}>
-            <Button title={'Find Your Location'} onPress={() => startScan()} />
+            <Button
+              title={'Find Your Location'}
+              onPress={() => {
+                globalImageMode = 1;
+                startScan();
+              }}
+            />
           </View>
 
           {list.length === 0 && (
@@ -405,10 +432,14 @@ const App = () => {
           keyExtractor={item => item.id}
         />
 
-        {/* <Image
-          source={require('./Assets/BLEAppMap.png')}
+        <Image
+          source={
+            imgMode === '0'
+              ? require('./Assets/BLEAppMap.png')
+              : require('./Assets/BLEAppMapUpdated.png')
+          }
           style={styles.image}
-        /> */}
+        />
 
         <DropDownPicker
           placeholder="Where do you want to go?"
@@ -423,7 +454,13 @@ const App = () => {
 
         <View style={styles.body}>
           <View style={styles.scanButton}>
-            <Button title={'Get Path'} onPress={() => startScan()} />
+            <Button
+              title={'Get Path'}
+              onPress={() => {
+                globalImageMode = 2;
+                startScan();
+              }}
+            />
           </View>
         </View>
       </SafeAreaView>
