@@ -39,6 +39,10 @@ import {stringToBytes} from 'convert-string';
 // this func is useful for making bytes-to-string conversion easier
 const Buffer = require('buffer/').Buffer;
 var globalImageMode = 0;
+var globalShelfChoice = 0;
+var globalBookChoice = 0;
+
+const bookShelfArray = [1, 2, 3, 4, 5, 6, 7, 8];
 
 const App = () => {
   const [isScanning, setIsScanning] = useState(false);
@@ -48,12 +52,30 @@ const App = () => {
 
   const [imgMode, setImgMode] = useState('0');
 
+  const [bookOpen, setBookOpen] = useState(false);
+  const [bookValue, setBookValue] = useState(null);
+  const [bookItems, setBookItems] = useState([
+    {label: 'Book 1', value: 1},
+    {label: 'Book 2', value: 2},
+    {label: 'Book 3', value: 3},
+    {label: 'Book 4', value: 4},
+    {label: 'Book 5', value: 5},
+    {label: 'Book 6', value: 6},
+    {label: 'Book 7', value: 7},
+    {label: 'Book 8', value: 8},
+  ]);
+
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(null);
   const [items, setItems] = useState([
-    {label: 1, value: 1},
-    {label: 2, value: 2},
-    {label: 3, value: 3},
+    {label: 'Shelf 1', value: 1},
+    {label: 'Shelf 2', value: 2},
+    {label: 'Shelf 3', value: 3},
+    {label: 'Shelf 4', value: 4},
+    {label: 'Shelf 5', value: 5},
+    {label: 'Shelf 6', value: 6},
+    {label: 'Shelf 7', value: 7},
+    {label: 'Shelf 8', value: 8},
   ]);
 
   // start to scan peripherals
@@ -98,7 +120,7 @@ const App = () => {
     console.log(discoveredPeripherals);
     console.log(globalImageMode);
     if (globalImageMode === 1) {
-      fetch('https://090a-14-139-234-179.in.ngrok.io/getLocation', {
+      fetch('https://7504-14-139-234-179.in.ngrok.io/getLocation', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -109,13 +131,16 @@ const App = () => {
         .then(resp => resp.json())
         .then(peripheralList => console.log(peripheralList));
     } else if (globalImageMode === 2) {
-      fetch('https://090a-14-139-234-179.in.ngrok.io/getPath', {
+      fetch('https://7504-14-139-234-179.in.ngrok.io/getPath', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-access-token': 'token-value',
         },
-        body: JSON.stringify(discoveredPeripherals),
+        body: JSON.stringify({
+          ...discoveredPeripherals,
+          ChoiceValue: globalShelfChoice,
+        }),
       })
         .then(resp => resp.json())
         .then(peripheralList => console.log(peripheralList));
@@ -203,7 +228,7 @@ const App = () => {
     BleManager.connect(peripheral.id)
       .then(() => {
         //console.log('Connected to ' + peripheral.id, peripheral);
-        console.log('Her Here!');
+        console.log('Here Here!');
         // update connected attribute
         updatePeripheral(peripheral, p => {
           p.connected = true;
@@ -297,6 +322,17 @@ const App = () => {
         console.log('Connection error', error);
       });
   };
+
+  function handleChoiceChange(e) {
+    globalShelfChoice = e;
+  }
+
+  function handleBookChoiceChange(e) {
+    globalBookChoice = e;
+    globalShelfChoice = bookShelfArray[e - 1];
+    setValue(globalShelfChoice);
+    console.log(globalShelfChoice);
+  }
 
   // mount and onmount event handler
   useEffect(() => {
@@ -414,6 +450,7 @@ const App = () => {
               onPress={() => {
                 globalImageMode = 1;
                 startScan();
+                setImgMode(globalImageMode);
               }}
             />
           </View>
@@ -426,19 +463,36 @@ const App = () => {
         </View>
 
         {/* ble devices */}
-        <FlatList
+        {/* <FlatList
           data={list}
           renderItem={({item}) => renderItem(item)}
           keyExtractor={item => item.id}
-        />
+        /> */}
 
         <Image
-          source={
-            imgMode === '0'
-              ? require('./Assets/BLEAppMap.png')
-              : require('./Assets/BLEAppMapUpdated.png')
-          }
+          source={{
+            uri:
+              imgMode === '0'
+                ? 'https://7504-14-139-234-179.in.ngrok.io/static/BLEAppMap.png' +
+                  '?time' +
+                  String(new Date().getTime())
+                : 'https://7504-14-139-234-179.in.ngrok.io/static/BLEAppMapUpdated.png' +
+                  '?time' +
+                  String(new Date().getTime()),
+          }}
           style={styles.image}
+        />
+
+        <DropDownPicker
+          placeholder="Which book to find?"
+          open={bookOpen}
+          value={bookValue}
+          items={bookItems}
+          setOpen={setBookOpen}
+          setValue={setBookValue}
+          setItems={setBookItems}
+          zIndex={1000}
+          onChangeValue={handleBookChoiceChange}
         />
 
         <DropDownPicker
@@ -450,6 +504,7 @@ const App = () => {
           setValue={setValue}
           setItems={setItems}
           zIndex={1000}
+          onChangeValue={handleChoiceChange}
         />
 
         <View style={styles.body}>
@@ -459,6 +514,7 @@ const App = () => {
               onPress={() => {
                 globalImageMode = 2;
                 startScan();
+                setImgMode(globalImageMode);
               }}
             />
           </View>
