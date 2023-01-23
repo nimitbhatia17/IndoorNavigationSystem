@@ -68,14 +68,14 @@ const App = () => {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(null);
   const [items, setItems] = useState([
-    {label: 'Shelf 1', value: 1},
-    {label: 'Shelf 2', value: 2},
-    {label: 'Shelf 3', value: 3},
-    {label: 'Shelf 4', value: 4},
-    {label: 'Shelf 5', value: 5},
-    {label: 'Shelf 6', value: 6},
-    {label: 'Shelf 7', value: 7},
-    {label: 'Shelf 8', value: 8},
+    {label: 'WARD 1', value: 1},
+    {label: 'WARD 2', value: 2},
+    {label: 'WARD 3', value: 3},
+    {label: 'WARD 4', value: 4},
+    {label: 'WARD 5', value: 5},
+    {label: 'WARD 6', value: 6},
+    {label: 'WARD 7', value: 7},
+    {label: 'WARD 8', value: 8},
   ]);
 
   // start to scan peripherals
@@ -91,7 +91,7 @@ const App = () => {
     setList(Array.from(peripherals.values()));
 
     // then re-scan it
-    BleManager.scan([], 3, true)
+    BleManager.scan([], 10, true)
       .then(() => {
         console.log('Scanning...');
         setIsScanning(true);
@@ -120,7 +120,7 @@ const App = () => {
     console.log(discoveredPeripherals);
     console.log(globalImageMode);
     if (globalImageMode === 1) {
-      fetch('https://7504-14-139-234-179.in.ngrok.io/getLocation', {
+      fetch('https://6d8f-203-115-91-38.in.ngrok.io/getLocation', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -131,7 +131,7 @@ const App = () => {
         .then(resp => resp.json())
         .then(peripheralList => console.log(peripheralList));
     } else if (globalImageMode === 2) {
-      fetch('https://7504-14-139-234-179.in.ngrok.io/getPath', {
+      fetch('https://6d8f-203-115-91-38.in.ngrok.io/getPath', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -237,9 +237,7 @@ const App = () => {
 
         // retrieve peripheral services info
         BleManager.retrieveServices(peripheral.id).then(peripheralInfo => {
-          //console.log('Retrieved peripheral services', peripheralInfo);
-
-          console.log('I am Here');
+          console.log('Retrieved peripheral services', peripheralInfo);
 
           // test read current peripheral RSSI value
           BleManager.readRSSI(peripheral.id).then(rssi => {
@@ -253,6 +251,7 @@ const App = () => {
           });
 
           // test read and write data to peripheral
+          // 000ffc0-0451-4000-b000-000000000000
           const serviceUUID = '10000000-0000-0000-0000-000000000001';
           const characteristicUUID = '20000000-0000-0000-0000-000000000001';
 
@@ -473,17 +472,17 @@ const App = () => {
           source={{
             uri:
               imgMode === '0'
-                ? 'https://7504-14-139-234-179.in.ngrok.io/static/BLEAppMap.png' +
+                ? 'https://6d8f-203-115-91-38.in.ngrok.io/static/BLEAppMap.png' +
                   '?time' +
                   String(new Date().getTime())
-                : 'https://7504-14-139-234-179.in.ngrok.io/static/BLEAppMapUpdated.png' +
+                : 'https://6d8f-203-115-91-38.in.ngrok.io/static/BLEAppMapUpdated.png' +
                   '?time' +
                   String(new Date().getTime()),
           }}
           style={styles.image}
         />
 
-        <DropDownPicker
+        {/* <DropDownPicker
           placeholder="Which book to find?"
           open={bookOpen}
           value={bookValue}
@@ -493,7 +492,7 @@ const App = () => {
           setItems={setBookItems}
           zIndex={1000}
           onChangeValue={handleBookChoiceChange}
-        />
+        /> */}
 
         <DropDownPicker
           placeholder="Where do you want to go?"
