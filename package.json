@@ -10,6 +10,11 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@expo/vector-icons": "^13.0.0",
+    "@react-native-community/masked-view": "^0.1.11",
+    "@react-navigation/native": "^6.1.2",
+    "@react-navigation/native-stack": "^6.9.8",
+    "@react-navigation/stack": "^6.3.11",
     "buffer": "^6.0.3",
     "convert-string": "^0.1.0",
     "react": "18.1.0",
@@ -17,8 +22,15 @@
     "react-native-ble-manager": "^8.4.3",
     "react-native-ble-plx": "^2.0.3",
     "react-native-dropdown-picker": "^5.4.2",
+    "react-native-elements": "^3.4.3",
+    "react-native-fast-image": "^8.6.3",
+    "react-native-gesture-handler": "^2.9.0",
     "react-native-material-dropdown": "^0.11.1",
-    "react-native-paper": "^4.12.5"
+    "react-native-paper": "^4.12.5",
+    "react-native-reanimated": "^2.14.4",
+    "react-native-safe-area-context": "^4.5.0",
+    "react-native-screens": "^3.19.0",
+    "react-native-vector-icons": "^9.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9",
