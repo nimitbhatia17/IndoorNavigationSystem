@@ -1,18 +1,23 @@
 import { useNavigation } from "@react-navigation/native";
 import React, { useState } from "react";
-import { StyleSheet, TextInput, View, Keyboard, Button, Image } from "react-native";
-const ngrokUrl = 'bbcf-14-139-234-179.in';
+import { StyleSheet, TextInput, View, Keyboard, Button, Image, FlatList, Text, TouchableHighlight } from "react-native";
+const ngrokUrl = '236b-14-139-234-179.in';
 
 const SearchPage = () => {
     const [clicked, setClicked] = useState("true");
     const [searchPhrase, setSearchPhrase] = useState(" ");
-
+    const [books, setBooks] = useState([]);
+    const [toggleList, setToggleList] = useState(false);
     const navigation = useNavigation();
+    const alignSelf = 'stretch';
+
+    // navigation function
     function navigateToHome() {
         setSearchPhrase(" ")
         navigation.navigate("Path");
 
     }
+
     function sendRequest() {
         fetch('https://' + ngrokUrl + '.ngrok.io/getBook', {
             method: 'POST',
@@ -23,8 +28,44 @@ const SearchPage = () => {
             body: JSON.stringify(searchPhrase),
         })
             .then(resp => resp.json())
-            .then(bookList => console.log(bookList));
+            .then((bookList) => {
+                setToggleList(true)
+                setBooks(bookList)
+            });
     }
+
+
+    // render list of books
+    const renderItem = item => {
+        return (
+            <TouchableHighlight onPress={() => navigateToHome()}>
+
+                <View
+                    style={[
+                        styles.box,
+                        {
+                            marginTop: "5%",
+                            alignSelf,
+                            width: 'auto',
+                            minWidth: 50,
+                            backgroundColor: 'powderblue',
+                        },
+                    ]}
+                >
+                    <Text
+                        style={{
+                            fontSize: 12,
+                            textAlign: 'center',
+                            color: '#fff',
+                            padding: 10
+                        }}>
+                        Book Name:{item["book_name"]}  |  Author Name: {item["author_name"]}
+                    </Text>
+                </View>
+            </TouchableHighlight>
+        );
+    };
+
     return (
 
         <View style={styles.container}>
@@ -50,37 +91,25 @@ const SearchPage = () => {
                         setClicked(true);
                     }}
                 />
-                {/* cross Icon, depending on whether the search bar is clicked or not */}
-
-                {/* {clicked && (
-                    <Entypo name="cross" size={20} color="black" style={{ padding: 1 }} onPress={() => {
-                        setSearchPhrase(" ")
-                    }} />
-                )}  */}
+            </View>
+            <View style={{ marginTop: "3%" }}>
+                <Button
+                    title="Search"
+                    onPress={() => {
+                        sendRequest();
+                    }}
+                />
             </View>
             {
-                clicked && (
-                    <Button
-                        title="Search"
-                        onPress={() => {
-                            sendRequest();
-                            navigateToHome();
-                        }}
+                toggleList ?
+                    <FlatList
+                        data={books}
+                        renderItem={({ item }) => renderItem(item)}
                     />
-                )
+                    : <>
+                    </>
             }
-            {/* cancel button, depending on whether the search bar is clicked or not */}
-            {/* {clicked && (
-                <View>
-                    <Button
-                        title="Cancel"
-                        onPress={() => {
-                            Keyboard.dismiss();
-                            setClicked(false);
-                        }}
-                    ></Button>
-                </View>
-            )} */}
+
         </View>
     );
 };
@@ -88,20 +117,10 @@ export default SearchPage;
 
 // styles
 const styles = StyleSheet.create({
-    SubmitButtonStyle: {
-        marginTop: "10%",
-        paddingTop: 15,
-        paddingBottom: 15,
-        marginLeft: 30,
-        marginRight: 30,
-        backgroundColor: '#00BCD4',
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: '#fff'
-    },
+
     container: {
         flex: 1,
-        justifyContent: "center",
+        paddingTop: "40%",
         alignItems: "center",
         backgroundColor: "#00BCD4",
 

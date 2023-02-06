@@ -44,7 +44,7 @@ var globalImgMode = 0;
 var globalShelfChoice = 0;
 var globalBookChoice = 0;
 
-const ngrokUrl = 'bbcf-14-139-234-179.in';
+const ngrokUrl = '236b-14-139-234-179.in';
 const bookShelfArray = [1, 2, 3, 4, 5, 6, 7, 8];
 
 const Home = () => {

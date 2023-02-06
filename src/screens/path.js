@@ -12,7 +12,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 
 
-const ngrokUrl = 'bbcf-14-139-234-179.in';
+const ngrokUrl = '236b-14-139-234-179.in';
 
 export default function Path() {
     const navigation = useNavigation();
