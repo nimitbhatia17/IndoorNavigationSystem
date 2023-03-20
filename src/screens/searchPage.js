@@ -1,50 +1,59 @@
 import { useNavigation } from "@react-navigation/native";
 import React, { useState } from "react";
 import { StyleSheet, TextInput, View, Keyboard, Button, Image, FlatList, Text, TouchableHighlight } from "react-native";
-const ngrokUrl = '236b-14-139-234-179.in';
+import AppLoader from "../../components/AppLoader";
+import { NGROK_URL } from "../../key";
+
+const ngrokUrl = NGROK_URL;
 
 const SearchPage = () => {
     const [clicked, setClicked] = useState("true");
-    const [searchPhrase, setSearchPhrase] = useState(" ");
+    const [searchPhrase, setSearchPhrase] = useState("");
     const [books, setBooks] = useState([]);
     const [toggleList, setToggleList] = useState(false);
+    const [showLoader, setShowLoader] = useState(false);
     const navigation = useNavigation();
     const alignSelf = 'stretch';
 
     // navigation function
-    function navigateToHome() {
+    function navigateToHome(props) {
         setSearchPhrase(" ")
-        navigation.navigate("Path");
-
+        navigation.navigate("Home", { bookList: props });
     }
 
-    function sendRequest() {
-        fetch('https://' + ngrokUrl + '.ngrok.io/getBook', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-access-token': 'token-value',
-            },
-            body: JSON.stringify(searchPhrase),
-        })
-            .then(resp => resp.json())
-            .then((bookList) => {
-                setToggleList(true)
-                setBooks(bookList)
-            });
+    const sendRequest = async () => {
+        try {
+            setShowLoader(true);
+            await fetch('https://' + ngrokUrl + '.ngrok.io/getBook', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-access-token': 'token-value',
+                },
+                body: JSON.stringify(searchPhrase),
+            })
+                .then(resp => resp.json())
+                .then((bookList) => {
+                    setToggleList(true)
+                    setBooks(bookList)
+                });
+            setShowLoader(false);
+
+        } catch (err) {
+            console.log(err);
+        }
     }
 
 
     // render list of books
     const renderItem = item => {
         return (
-            <TouchableHighlight onPress={() => navigateToHome()}>
+            <TouchableHighlight onPress={() => navigateToHome(item)} underlayColor= "powderblue" style={{marginTop: 10, marginBottom: 10}}>
 
                 <View
                     style={[
                         styles.box,
                         {
-                            marginTop: "5%",
                             alignSelf,
                             width: 'auto',
                             minWidth: 50,
@@ -59,13 +68,12 @@ const SearchPage = () => {
                             color: '#fff',
                             padding: 10
                         }}>
-                        Book Name:{item["book_name"]}  |  Author Name: {item["author_name"]}
+                        Book Name: {item["book_name"]}  |  Author Name: {item["author_name"]}
                     </Text>
                 </View>
             </TouchableHighlight>
         );
     };
-
     return (
 
         <View style={styles.container}>
@@ -84,7 +92,7 @@ const SearchPage = () => {
                 {/* Input field */}
                 <TextInput
                     style={styles.input}
-                    placeholder="Search"
+                    placeholder="Enter Book Name"
                     value={searchPhrase}
                     onChangeText={setSearchPhrase}
                     onFocus={() => {
@@ -96,17 +104,19 @@ const SearchPage = () => {
                 <Button
                     title="Search"
                     onPress={() => {
+                        Keyboard.dismiss();
                         sendRequest();
+                        setToggleList(true);
                     }}
                 />
             </View>
             {
-                toggleList ?
+                !showLoader ?
                     <FlatList
                         data={books}
                         renderItem={({ item }) => renderItem(item)}
                     />
-                    : <>
+                    : <><AppLoader />
                     </>
             }
 

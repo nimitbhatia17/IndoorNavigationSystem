@@ -11,8 +11,9 @@ import {
 } from 'react-native';
 import { useNavigation } from "@react-navigation/native";
 
-
-const ngrokUrl = '236b-14-139-234-179.in';
+// import {NGROK_URL} from "react-native-dotenv"
+import { NGROK_URL } from "../../key";
+const ngrokUrl = NGROK_URL;
 
 export default function Path() {
     const navigation = useNavigation();
@@ -27,7 +28,7 @@ function navigateToNavigationPage(){
                 <Image
                     source={{
                         uri:
-                            'https://' + ngrokUrl + '.ngrok.io/static/FloorMapUpdated.png' +
+                            'https://' + ngrokUrl + '.ngrok.io/static/PULibraryMapUpdated.png' +
                             '?time' +
                             String(new Date().getTime()),
                     }}

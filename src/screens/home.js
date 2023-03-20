@@ -1,10 +1,3 @@
-/**
- * Sample BLE React Native App
- *
- * @format
- * @flow strict-local
- */
-
 import React, { useState, useEffect } from 'react';
 import {
     SafeAreaView,
@@ -18,8 +11,6 @@ import {
     Platform,
     PermissionsAndroid,
     Image,
-    FlatList,
-    TouchableHighlight,
 } from 'react-native';
 
 import { useNavigation } from '@react-navigation/native';
@@ -27,46 +18,34 @@ import { useNavigation } from '@react-navigation/native';
 import DropDownPicker from 'react-native-dropdown-picker';
 
 import { Colors } from 'react-native/Libraries/NewAppScreen';
+import AppLoader from '../../components/AppLoader.js';
 
 // import and setup react-native-ble-manager
 import BleManager from 'react-native-ble-manager';
+
+// import { NGROK_URL } from "react-native-dotenv";
+import { NGROK_URL } from '../../key.js';
+
+const ngrokUrl = NGROK_URL;
+
+
 const BleManagerModule = NativeModules.BleManager;
 const bleEmitter = new NativeEventEmitter(BleManagerModule);
 
-// import stringToBytes from convert-string package.
-// this func is useful for making string-to-bytes conversion easier
-import { stringToBytes } from 'convert-string';
 
 // import Buffer function.
 // this func is useful for making bytes-to-string conversion easier
 const Buffer = require('buffer/').Buffer;
 var globalImgMode = 0;
 var globalShelfChoice = 0;
-var globalBookChoice = 0;
 
-const ngrokUrl = '236b-14-139-234-179.in';
-const bookShelfArray = [1, 2, 3, 4, 5, 6, 7, 8];
-
-const Home = () => {
+const Home = ({ route }) => {
     const [isScanning, setIsScanning] = useState(false);
     const [list, setList] = useState([]);
     const peripherals = new Map();
-    const [testMode, setTestMode] = useState('read');
 
     const [imgMode, setImgMode] = useState('0');
-
-    const [bookOpen, setBookOpen] = useState(false);
-    const [bookValue, setBookValue] = useState(null);
-    const [bookItems, setBookItems] = useState([
-        { label: 'Book 1', value: 1 },
-        { label: 'Book 2', value: 2 },
-        { label: 'Book 3', value: 3 },
-        { label: 'Book 4', value: 4 },
-        { label: 'Book 5', value: 5 },
-        { label: 'Book 6', value: 6 },
-        { label: 'Book 7', value: 7 },
-        { label: 'Book 8', value: 8 },
-    ]);
+    const [showLoader, setShowLoader] = useState(false);
 
     const [open, setOpen] = useState(false);
     const [value, setValue] = useState(null);
@@ -81,6 +60,7 @@ const Home = () => {
         { label: 'WARD 8', value: 8 },
     ]);
     const navigation = useNavigation();
+
     // start to scan peripherals
     const startScan = () => {
         console.log('In start Scan');
@@ -94,7 +74,7 @@ const Home = () => {
         setList(Array.from(peripherals.values()));
 
         // then re-scan it
-        BleManager.scan([], 10, true)
+        BleManager.scan([], 15, true)
             .then(() => {
                 console.log('Scanning...');
                 setIsScanning(true);
@@ -116,12 +96,13 @@ const Home = () => {
     };
 
     // handle stop scan event
-    const handleStopScan = () => {
+    const handleStopScan = async() => {
+        setShowLoader(true);
         console.log('Scan is stopped');
         const discoveredPeripherals = Object.fromEntries(peripherals);
         console.log(discoveredPeripherals);
         if (globalImgMode === 1) {
-            fetch('https://' + ngrokUrl + '.ngrok.io/getLocation', {
+            await fetch('https://' + ngrokUrl + '.ngrok.io/getLocation', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -133,7 +114,7 @@ const Home = () => {
                 .then(peripheralList => console.log(peripheralList));
         }
         else if (globalImgMode === 2) {
-            fetch('https://' + ngrokUrl + '.ngrok.io/getPath', {
+           await fetch('https://' + ngrokUrl + '.ngrok.io/getPath', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -141,12 +122,14 @@ const Home = () => {
                 },
                 body: JSON.stringify({
                     ...discoveredPeripherals,
-                    ChoiceValue: globalShelfChoice,
+                    ChoiceValue: route.params.bookList.rack_number,
                 }),
             })
                 .then(resp => resp.json())
                 .then(peripheralList => console.log(peripheralList));
         }
+        console.log("setting show loader to false")
+        setShowLoader(false);
         setIsScanning(false);
     };
 
@@ -172,167 +155,10 @@ const Home = () => {
         // );
     };
 
-    // retrieve connected peripherals.
-    // not currenly used
-    const retrieveConnectedPeripheral = () => {
-        BleManager.getConnectedPeripherals([]).then(results => {
-            peripherals.clear();
-            setList(Array.from(peripherals.values()));
 
-            if (results.length === 0) {
-                console.log('No connected peripherals');
-            }
-
-            for (var i = 0; i < results.length; i++) {
-                var peripheral = results[i];
-                peripheral.connected = true;
-                peripherals.set(peripheral.id, peripheral);
-                setList(Array.from(peripherals.values()));
-            }
-        });
-    };
-
-    // update stored peripherals
-    const updatePeripheral = (peripheral, callback) => {
-        let p = peripherals.get(peripheral.id);
-        if (!p) {
-            return;
-        }
-
-        p = callback(p);
-        peripherals.set(peripheral.id, p);
-        setList(Array.from(peripherals.values()));
-    };
-
-    // get advertised peripheral local name (if exists). default to peripheral name
-    const getPeripheralName = item => {
-        if (item.advertising) {
-            if (item.advertising.localName) {
-                return item.advertising.localName;
-            }
-        }
-
-        return item.name;
-    };
-
-    // connect to peripheral then test the communication
-    const connectAndTestPeripheral = peripheral => {
-        if (!peripheral) {
-            return;
-        }
-
-        if (peripheral.connected) {
-            BleManager.disconnect(peripheral.id);
-            return;
-        }
-
-        // connect to selected peripheral
-        BleManager.connect(peripheral.id)
-            .then(() => {
-                //console.log('Connected to ' + peripheral.id, peripheral);
-                console.log('Here Here!');
-                // update connected attribute
-                updatePeripheral(peripheral, p => {
-                    p.connected = true;
-                    return p;
-                });
-
-                // retrieve peripheral services info
-                BleManager.retrieveServices(peripheral.id).then(peripheralInfo => {
-                    console.log('Retrieved peripheral services', peripheralInfo);
-
-                    // test read current peripheral RSSI value
-                    BleManager.readRSSI(peripheral.id).then(rssi => {
-                        console.log('Retrieved actual RSSI value', rssi);
-
-                        // update rssi value
-                        updatePeripheral(peripheral, p => {
-                            p.rssi = rssi;
-                            return p;
-                        });
-                    });
-
-                    // test read and write data to peripheral
-                    // 000ffc0-0451-4000-b000-000000000000
-                    const serviceUUID = '10000000-0000-0000-0000-000000000001';
-                    const characteristicUUID = '20000000-0000-0000-0000-000000000001';
-
-                    // console.log('peripheral id:', peripheral.id);
-                    // console.log('service:', serviceUUID);
-                    // console.log('characteristic:', characteristicUUID);
-
-                    switch (testMode) {
-                        case 'write':
-                            // ===== test write data
-                            const payload = 'pizza';
-                            const payloadBytes = stringToBytes(payload);
-                            console.log('payload:', payload);
-
-                            BleManager.write(
-                                peripheral.id,
-                                serviceUUID,
-                                characteristicUUID,
-                                payloadBytes,
-                            )
-                                .then(res => {
-                                    console.log('write response', res);
-                                    alert(
-                                        `your "${payload}" is stored to the food bank. Thank you!`,
-                                    );
-                                })
-                                .catch(error => {
-                                    console.log('write err', error);
-                                });
-                            break;
-
-                        case 'read':
-                            // ===== test read data
-                            BleManager.read(peripheral.id, serviceUUID, characteristicUUID)
-                                .then(res => {
-                                    console.log('read response', res);
-                                    if (res) {
-                                        const buffer = Buffer.from(res);
-                                        const data = buffer.toString();
-                                        console.log('data', data);
-                                        alert(`you have stored food "${data}"`);
-                                    }
-                                })
-                                .catch(error => {
-                                    console.log('read err', error);
-                                    alert(error);
-                                });
-                            break;
-
-                        case 'notify':
-                            // ===== test subscribe notification
-                            BleManager.startNotification(
-                                peripheral.id,
-                                serviceUUID,
-                                characteristicUUID,
-                            ).then(res => {
-                                console.log('start notification response', res);
-                            });
-                            break;
-
-                        default:
-                            break;
-                    }
-                });
-            })
-            .catch(error => {
-                console.log('Connection error', error);
-            });
-    };
 
     function handleChoiceChange(e) {
         globalShelfChoice = e;
-    }
-
-    function handleBookChoiceChange(e) {
-        globalBookChoice = e;
-        globalShelfChoice = bookShelfArray[e - 1];
-        setValue(globalShelfChoice);
-        console.log(globalShelfChoice);
     }
     function navigateToPath() {
         navigation.navigate("Path");
@@ -404,107 +230,49 @@ const Home = () => {
         };
     }, []);
 
-    // render list of devices
-    const renderItem = item => {
-        const color = item.connected ? 'green' : '#fff';
-        return (
-            <TouchableHighlight onPress={() => connectAndTestPeripheral(item)}>
-                <View style={[styles.row, { backgroundColor: color }]}>
-                    <Text
-                        style={{
-                            fontSize: 12,
-                            textAlign: 'center',
-                            color: '#333333',
-                            padding: 10,
-                        }}>
-                        {getPeripheralName(item)}
-                    </Text>
-                    <Text
-                        style={{
-                            fontSize: 10,
-                            textAlign: 'center',
-                            color: '#333333',
-                            padding: 2,
-                        }}>
-                        RSSI: {item.rssi}
-                    </Text>
-                    <Text
-                        style={{
-                            fontSize: 8,
-                            textAlign: 'center',
-                            color: '#333333',
-                            padding: 2,
-                            paddingBottom: 20,
-                        }}>
-                        {item.id}
-                    </Text>
-                </View>
-            </TouchableHighlight>
-        );
-    };
 
     return (
-        <>
+        showLoader ? (<AppLoader />) : <>
+
             <StatusBar barStyle="dark-content" />
             <SafeAreaView style={styles.safeAreaView}>
                 {/* header */}
-
-
                 <View style={styles.body}>
                     <View style={styles.scanButton}>
                         <Button
                             title={'Find Your Location'}
                             onPress={() => {
                                 globalImgMode = 1;
+                                setShowLoader(true);
                                 startScan();
                                 setImgMode(globalImgMode);
                             }}
                         />
                     </View>
 
-                    {list.length === 0 && (
+                    {/* {list.length === 0 && (
                         <View style={styles.noPeripherals}>
                             <Text style={styles.noPeripheralsText}>No peripherals</Text>
                         </View>
-                    )}
+                    )} */}
                 </View>
-
-
-
-                {/* ble devices */}
-                {/* <FlatList
-          data={list}
-          renderItem={({ item }) => renderItem(item)}
-          keyExtractor={item => item.id}
-        /> */}
 
                 <Image
                     source={{
                         uri:
                             imgMode === '0'
-                                ? 'https://' + ngrokUrl + '.ngrok.io/static/FloorMapHostel.png' +
+                                ? 'https://' + ngrokUrl + '.ngrok.io/static/PULibraryMap.png' +
                                 '?time' +
                                 String(new Date().getTime())
-                                : 'https://' + ngrokUrl + '.ngrok.io/static/FloorMapUpdated.png' +
+                                : 'https://' + ngrokUrl + '.ngrok.io/static/PULibraryMapUpdated.png' +
                                 '?time' +
                                 String(new Date().getTime()),
                     }}
                     style={styles.image}
                 />
 
-                {/* <DropDownPicker
-          placeholder="Which book to find?"
-          open={bookOpen}
-          value={bookValue}
-          items={bookItems}
-          setOpen={setBookOpen}
-          setValue={setBookValue}
-          setItems={setBookItems}
-          zIndex={1000}
-          onChangeValue={handleBookChoiceChange}
-        /> */}
 
-                <DropDownPicker
+                {/* <DropDownPicker
                     placeholder="Where do you want to go?"
                     open={open}
                     value={value}
@@ -514,7 +282,7 @@ const Home = () => {
                     setItems={setItems}
                     zIndex={1000}
                     onChangeValue={handleChoiceChange}
-                />
+                /> */}
                 <View style={styles.body}>
 
                     <View style={styles.scanButton}>
@@ -530,11 +298,9 @@ const Home = () => {
                         />
                     </View>
                 </View>
-
-
-
-
             </SafeAreaView>
+
+            {/* </>} */}
         </>
     );
 };

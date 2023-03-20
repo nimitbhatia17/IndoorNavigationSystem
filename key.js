@@ -1,0 +1,1 @@
+export let NGROK_URL = "eb48-103-155-138-195.in"
